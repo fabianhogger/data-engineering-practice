@@ -22,7 +22,7 @@ class downloader():
             self.last_modified=last_modified
             self.filename=filename 
 
-    def driver_setup(self,download_path):
+    def driver_setup(self):
         chrome_options = Options()
         chrome_options.add_argument("--headless")  # Run Chrome in headless mode
         chrome_options.add_argument("--no-sandbox")
@@ -52,12 +52,12 @@ class downloader():
         chrome_options.add_argument("--disable-crash-reporter")
         chrome_options.add_argument("--disable-infobars")
         chrome_options.add_experimental_option("prefs", {
-        "download.default_directory": download_path
+        "download.default_directory": self.path
         })
         service = Service(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=chrome_options)
         return driver
-    def find_file(self,driver,last_modified):
+    def find_file(self,driver):
         rows = driver.find_elements(By.TAG_NAME ,"td")
         for i in range(0,len(rows)):
             if rows[i].text==last_modified:
@@ -67,26 +67,26 @@ class downloader():
                 return row.text
         print("Didn't find file on the website")
         return None
-    def analyze(self,filename,download_path):
+    def analyze(self,filename):
         try:
-                df = pd.read_csv(download_path+filename, low_memory=False)
-                print(f"CSV file successfully read! {download_path+filename}")
+                df = pd.read_csv(self.path+filename, low_memory=False)
+                print(f"CSV file successfully read! {self.path+filename}")
                 df['HourlyDryBulbTemperature']=df['HourlyDryBulbTemperature'].apply(pd.to_numeric, errors='coerce').astype(float)
                 maxval=df['HourlyDryBulbTemperature'].max()
                 df=df.loc[df['HourlyDryBulbTemperature']==maxval]
                 print(df)
         except FileNotFoundError:
-                print(f"File not found: {filename}")
+                print(f"File not found: {self.filename}")
                 return None
     def download(self):
-        driver=dn.driver_setup(download_path)
+        driver=dn.driver_setup()
         try:
             driver.get(link)
             #wait for website to load
             driver.implicitly_wait(13)
-            filename= dn.find_file(driver,last_modified)
+            filename= dn.find_file(driver)
             if(filename):
-                    dn.analyze(filename,download_path)
+                    dn.analyze(filename)
         except selenium.common.exceptions.NoSuchElementException:
             print("The link does not exist.")
         except selenium.common.exceptions.WebDriverException:
