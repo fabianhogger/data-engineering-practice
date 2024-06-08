@@ -16,8 +16,8 @@ import os
 
 
 class downloader():
-    def __init__(self,path=os.getcwd()+"\\Downloads\\",link="https://www.ncei.noaa.gov/data/local-climatological-data/access/2021/",last_modified="2024-01-19 09:51",filename ="01001099999.csv"):
-            self.path= os.getcwd()+"\\Downloads\\" if path is None else path
+    def __init__(self,path=os.getcwd()+"/Downloads/",link="https://www.ncei.noaa.gov/data/local-climatological-data/access/2021/",last_modified="2024-01-19 09:51",filename ="01001099999.csv"):
+            self.path= os.getcwd()+"/Downloads/" if path is None else path
             self.link="https://www.ncei.noaa.gov/data/local-climatological-data/access/2021/" if link is None else link
             self.last_modified="2024-01-19 09:51" if last_modified is None else last_modified 
             self.filename=filename 
@@ -60,7 +60,7 @@ class downloader():
     def find_file(self,driver):
         rows = driver.find_elements(By.TAG_NAME ,"td")
         for i in range(0,len(rows)):
-            if rows[i].text==last_modified:
+            if rows[i].text==self.last_modified:
                 row=rows[i-1]
                 row.click()
                 time.sleep(15)
@@ -76,7 +76,7 @@ class downloader():
                 df=df.loc[df['HourlyDryBulbTemperature']==maxval]
                 print(df)
         except FileNotFoundError:
-                print(f"File not found: {self.filename}")
+                print(f"File not found: {self.path+ filename}")
                 return None
     def download(self):
         driver=dn.driver_setup()
