@@ -17,9 +17,9 @@ import os
 
 class downloader():
     def __init__(self,path=os.getcwd()+"\\Downloads\\",link="https://www.ncei.noaa.gov/data/local-climatological-data/access/2021/",last_modified="2024-01-19 09:51",filename ="01001099999.csv"):
-            self.path=path
-            self.link=link
-            self.last_modified=last_modified
+            self.path= os.getcwd()+"\\Downloads\\" if path is None else path
+            self.link="https://www.ncei.noaa.gov/data/local-climatological-data/access/2021/" if link is None else link
+            self.last_modified="2024-01-19 09:51" if last_modified is None else last_modified 
             self.filename=filename 
 
     def driver_setup(self):
@@ -70,7 +70,7 @@ class downloader():
     def analyze(self,filename):
         try:
                 df = pd.read_csv(self.path+filename, low_memory=False)
-                print(f"CSV file successfully read! {self.path+filename}")
+                print(f"CSV file successfully read! {self.path+ filename}")
                 df['HourlyDryBulbTemperature']=df['HourlyDryBulbTemperature'].apply(pd.to_numeric, errors='coerce').astype(float)
                 maxval=df['HourlyDryBulbTemperature'].max()
                 df=df.loc[df['HourlyDryBulbTemperature']==maxval]
@@ -81,7 +81,7 @@ class downloader():
     def download(self):
         driver=dn.driver_setup()
         try:
-            driver.get(link)
+            driver.get(self.link)
             #wait for website to load
             driver.implicitly_wait(13)
             filename= dn.find_file(driver)
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     download_path=args.path 
     last_modified=args.timestamp
     filename=args.filename 
-    link=args.link 
+    link= args.link  
     print(args)
     print(filename)
     dn=downloader(path=download_path,link=link,last_modified=last_modified,filename=filename)
