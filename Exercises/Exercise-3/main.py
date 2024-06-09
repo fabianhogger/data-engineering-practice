@@ -78,13 +78,15 @@ class downloader():
                             return first[0]
     def download(self):
         driver=dn.driver_setup()
-        try:
-            driver.get(self.link)
-            #wait for website to load
-            driver.implicitly_wait(13)
-            link= dn.find_link(driver)
-            requests.get("https://data.commoncrawl.org/"+link,'common1.gz')
-            
+        driver.get(self.link)
+        #wait for website to load
+        driver.implicitly_wait(13)
+        link= dn.find_link(driver)
+        response=requests.get("https://data.commoncrawl.org/"+link,stream=True)
+        with open("mytextfile.gz", 'wb') as f:
+            for chunk in response.iter_content(chunk_size=512):
+                f.write(chunk)
+        f.close()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Give link  directory where you wish to download  the file and last modified  value')
