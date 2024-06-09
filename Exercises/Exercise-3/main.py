@@ -11,7 +11,7 @@ import shutil
 import os
 import requests
 import time
-
+import io
 
 class downloader():
     def __init__(self,path=os.getcwd()+"/Downloads/",link="https://www.ncei.noaa.gov/data/local-climatological-data/access/2021/",last_modified="2024-01-19 09:51",filename ="01001099999.csv"):
@@ -22,7 +22,7 @@ class downloader():
 
     def driver_setup(self):
         chrome_options = Options()
-        #chrome_options.add_argument("--headless")  # Run Chrome in headless mode
+        chrome_options.add_argument("--headless")  # Run Chrome in headless mode
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
@@ -55,48 +55,36 @@ class downloader():
         service = Service(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=chrome_options)
         return driver
-    def find_file(self,driver):
+    def find_link(self,driver):
         links = driver.find_elements(By.XPATH, "//table//a")
         # Extract the href attribute from each link
         for link in links:
 
             if self.last_modified in link.get_attribute("href"):
                 link=link.get_attribute("href")
-                print(link)
+                print(f"links {link}")
                 if(".gz" in link):
-                    requests.get(link)
-                    time.sleep(20)
                     response=requests.get(link,'common.gz',stream=True)
-                    handle = open('common.gz', "wb")
                     for chunk in response.iter_content(chunk_size=512):
-                        print(chunk)
-
-        return None
-    def analyze(self,filename):
-        try:
-                df = pd.read_csv(self.path+filename, low_memory=False)
-                print(f"CSV file successfully read! {self.path+ filename}")
-                df['HourlyDryBulbTemperature']=df['HourlyDryBulbTemperature'].apply(pd.to_numeric, errors='coerce').astype(float)
-                maxval=df['HourlyDryBulbTemperature'].max()
-                df=df.loc[df['HourlyDryBulbTemperature']==maxval]
-                print(df)
-        except FileNotFoundError:
-                print(f"File not found: {self.path+ filename}")
-                return None
+                        f = io.BytesIO(chunk)
+                        with gzip.open(f, 'rb') as f_in:
+                            read_chunk = f_in.read(512)
+                            print(read_chunk)
+                            if not read_chunk:
+                                break
+                            first=read_chunk.decode('utf-8').split('\n')
+                            print("all ",first)
+                            print("first ",first[0])
+                            return first[0]
     def download(self):
         driver=dn.driver_setup()
         try:
             driver.get(self.link)
             #wait for website to load
             driver.implicitly_wait(13)
-            filename= dn.find_file(driver)
-            if(filename):
-                    dn.analyze(filename)
-        except selenium.common.exceptions.NoSuchElementException:
-            print("The link does not exist.")
-        except selenium.common.exceptions.WebDriverException:
-            print("An error occurred while navigating to the link.")
-   
+            link= dn.find_link(driver)
+            requests.get("https://data.commoncrawl.org/"+link,'common1.gz')
+            
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Give link  directory where you wish to download  the file and last modified  value')
